@@ -1,5 +1,5 @@
 import React from 'react'
-// import { graphql, gql } from 'react-apollo'
+import { graphql, gql } from 'react-apollo'
 
 // @graphql(gql`
 // query {
@@ -9,6 +9,10 @@ import React from 'react'
 // }
 // `)
 export default class Home extends React.Component {
+  // componentWillReceiveProps (nextProps) {
+  //   if (nextProps.data.)
+  // }
+
   render () {
     if (this.props.data.loading) {
       return <div>Loading!</div>
@@ -18,7 +22,11 @@ export default class Home extends React.Component {
 
     return (
       <div>
-
+        {this.props.data.allCourses.map(course =>
+          <div key={course.name}>
+            {course.name}
+          </div>
+        )}
       </div>
     )
   }

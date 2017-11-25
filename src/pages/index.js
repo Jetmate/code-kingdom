@@ -1,3 +1,4 @@
 export Login from './login'
 export Home from './home'
-export Callback from './callback'
+export Signup from './signup'
+export Loading from './loading'

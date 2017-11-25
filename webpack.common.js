@@ -20,7 +20,7 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.jsx'],
     alias: {
-      shared: path.resolve(APP_DIR, 'shared')
+      src: APP_DIR
     }
   },
 
