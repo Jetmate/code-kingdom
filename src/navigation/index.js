@@ -12,7 +12,7 @@ import history from './history'
 
 
 const httpLink = createHttpLink({
-  uri: 'http://0.0.0.0:3000/'
+  uri: 'http://0.0.0.0:3000/graphql'
 })
 
 const authLink = setContext((_, { headers }) => {
@@ -26,7 +26,7 @@ const authLink = setContext((_, { headers }) => {
   }
 })
 
-const client = new ApolloClient({
+export const client = new ApolloClient({
   link: authLink.concat(httpLink),
   cache: new InMemoryCache()
 })

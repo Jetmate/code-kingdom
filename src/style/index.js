@@ -9,9 +9,15 @@ export function styleSheet (definitions) {
 }
 
 export const colors = {
-  gradient: 'linear-gradient(135deg, rgb(7, 219, 124) 0%, rgb(114, 227, 255) 100%)',
+  green: ['#64ffac', '#07db7c', '#00a84e'],
+  blue: ['#a9ffff', '#72e3ff', '#34b1cc'],
   black: ['#242424'],
   white: ['#D9D9D9', '#808080'],
+  red: ['#ff6f60', '#e53935', '#ab000d'],
+}
+
+export const gradients = {
+  green: `linear-gradient(135deg, ${colors.green[1]} 0%, ${colors.blue[1]} 100%)`,
 }
 
 export const align = {
@@ -39,15 +45,28 @@ globals({
   'h1, h2, h3': {
     textAlign: 'center',
   },
-  'button': {
+  'h1': {
+    fontSize: 40,
+  },
+  'h2': {
+    fontSize: 15,
+  },
+  'input, button': {
     border: '0',
     display: 'block',
-    margin: 'auto',
     fontFamily: 'inconsolata',
     opacity: 1,
-    position: 'relative',
+    fontSize: 20,
     borderBottom: '2px solid ' + colors.white[1],
-    transitionDuration: '.3s',
+    backgroundColor: colors.white[0],
+    fontWeight: 'bold',
+    padding: 3,
+    margin: '5px auto',
+  },
+  'button': {
+    position: 'relative',
+    transitionDuration: '.1s',
+    height: 30,
   },
   'button:after': {
     position: 'absolute',
@@ -55,13 +74,16 @@ globals({
     top: 0,
     left: 0,
     opacity: 0,
-    background: colors.gradient,
-    transitionDuration: '.3s',
+    background: gradients.green,
+    transitionDuration: '.5s',
     width: '100%',
     height: '100%',
   },
   'button:hover:after': {
     opacity: 1,
+  },
+  'button:hover': {
+    borderBottomColor: colors.green[2],
   },
   'button span': {
     zIndex: 10,
@@ -71,7 +93,7 @@ globals({
     transform: 'translateY(1px)',
     borderBottom: 0,
   },
-  'button:focus': {
+  'button:focus, input:focus': {
     outline: 'none',
   }
 })

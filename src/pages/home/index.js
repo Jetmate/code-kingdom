@@ -1,18 +1,15 @@
 import React from 'react'
-import { graphql, gql } from 'react-apollo'
+import { graphql } from 'react-apollo'
+import gql from 'graphql-tag'
 
-// @graphql(gql`
-// query {
-//   allCourses {
-//     name
-//   }
-// }
-// `)
+@graphql(gql`
+query {
+  allCourses {
+    name
+  }
+}
+`)
 export default class Home extends React.Component {
-  // componentWillReceiveProps (nextProps) {
-  //   if (nextProps.data.)
-  // }
-
   render () {
     if (this.props.data.loading) {
       return <div>Loading!</div>

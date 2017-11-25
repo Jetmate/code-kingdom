@@ -1,4 +1,6 @@
 import querystring from 'querystring'
+import { client } from 'src/navigation'
+import gql from 'graphql-tag'
 
 import history from 'src/navigation/history'
 
@@ -63,8 +65,34 @@ export async function validate (token) {
   }
   window.localStorage.setItem('token', token)
   window.localStorage.setItem('exp', auth.exp)
+
+  const { data } = await client.query({
+    query: gql`
+      query($id: ID!) {
+        User(id: $id) {
+          id
+        }
+      }
+    `,
+    variables: { id: auth.sub }
+  })
   console.log(auth)
-  history.replace('/home')
+  if (data.User) {
+    history.replace('/home')
+  } else {
+    await client.mutate({
+      mutation: gql`
+        mutation CreateUser($username: String!) {
+          createUser(username: $username) {
+            id
+          }
+        }
+      `,
+      variables: { username: auth.email.split('@')[0] }
+    })
+
+    history.replace('/signup')
+  }
 }
 
 export function logout () {
@@ -72,7 +100,6 @@ export function logout () {
   window.localStorage.removeItem('exp')
 }
 
-export function authenticated () {
-  console.log(Date.now() - JSON.parse(window.localStorage.getItem('exp')) * 1000)
-  return Date.now() < JSON.parse(window.localStorage.getItem('exp')) * 1000
+export function isAuthenticated () {
+  return Date.now() < parseInt(window.localStorage.getItem('exp')) * 1000
 }
