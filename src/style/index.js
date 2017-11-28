@@ -11,7 +11,7 @@ export function styleSheet (definitions) {
 export const colors = {
   green: ['#64ffac', '#07db7c', '#00a84e'],
   blue: ['#a9ffff', '#72e3ff', '#34b1cc'],
-  black: ['#242424'],
+  black: ['#242424', '#494949'],
   white: ['#D9D9D9', '#808080'],
   red: ['#ff6f60', '#e53935', '#ab000d'],
 }

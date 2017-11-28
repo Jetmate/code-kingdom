@@ -31,6 +31,7 @@ export const client = new ApolloClient({
   cache: new InMemoryCache()
 })
 
+
 export default function Navigation () {
   return (
     <Router history={history}>

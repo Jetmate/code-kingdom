@@ -10,7 +10,7 @@ import { isAuthenticated, validate } from 'src/auth'
 //   )
 // }
 
-function ProtectedRoute ({ authenticated, ...props }) {
+function ProtectedRoute ({ authenticated = true, ...props }) {
   const auth = isAuthenticated()
   if ((authenticated && auth) || (!authenticated && !auth)) {
     return <Route {...props} />
@@ -19,18 +19,20 @@ function ProtectedRoute ({ authenticated, ...props }) {
   }
 }
 
-export default function Routes () {
-  console.log('routes')
+export default function Routes (props) {
+  console.log(props)
   return (
     <Switch>
       <Route path='/' exact component={pages.Login} />
-      <ProtectedRoute authenticated path='/signup' component={pages.Signup} />
+      <ProtectedRoute path='/signup' component={pages.Signup} />
       <Route path='/oauth2callback' render={props => {
         const params = new URLSearchParams(props.location.hash.substr(1))
         validate(params.get('access_token'))
         return <pages.Loading />
       }} />
-      <ProtectedRoute authenticated path='/home' component={pages.Home} />
+      <ProtectedRoute path='/home' component={pages.Home} />
+      <Route path='/courses/:course' component={pages.Course} />
+      <Route path='/courses' component={pages.Courses} />
     </Switch>
   )
 }

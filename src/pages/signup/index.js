@@ -19,17 +19,19 @@ const rules = styleSheet({
 })
 
 @graphql(gql`
-mutation EditUser($username: String!, $bio: String!) {
-  editUser(username: $username, bio: $bio) {
-    id
+mutation EditUser($input: editUserInput!) {
+  editUser(input: $input) {
+    _id
   }
 }
 `)
 export default class Signup extends React.Component {
   state = {
     data: {
-      username: '',
-      bio: '',
+      input: {
+        username: '',
+        bio: '',
+      }
     },
     error: '',
   }
