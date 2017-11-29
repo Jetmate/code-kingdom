@@ -107,10 +107,39 @@ const fragments = {
       n
       ok
     }
-  `
+  `,
+  lesson: `
+    fragment lesson on Lesson {
+      _id
+      title
+      slides {
+        _id
+        title
+        ... on Quiz {
+          questions {
+            title
+            answers {
+              title
+              correct
+            }
+          }
+        }
+        ... on Instruction {
+          description
+          hint
+          code
+          correctOutput
+        }
+        ... on Project {
+          description
+          code
+        }
+      }
+    }
+  `,
 }
 
-let query, mutation, variables
+let query, mutation, variables, courseId, lessonId
 
 beforeEach(async () => {
   variables = {}
@@ -119,8 +148,8 @@ beforeEach(async () => {
 })
 
 const run = async () => {
-  if (query) await client.query({ query: gql(query), variables })
-  else if (mutation) await client.mutate({ mutation: gql(mutation), variables })
+  if (query) return client.query({ query: gql(query), variables })
+  else if (mutation) return client.mutate({ mutation: gql(mutation), variables })
   else throw new Error('must specify query or mutation')
 }
 
@@ -196,21 +225,9 @@ test('titleCourse', async () => {
     }
   ` + fragments.course
   variables = { title: tokenSecret.course.title }
-  return run()
+  const result = await run()
+  courseId = result.data.titleCourse._id
 })
-
-const getCourseId = async () => {
-  return (await client.query({
-    query: gql`
-      query($title: String!) {
-        titleCourse(title: $title) {
-          _id
-        }
-      }
-    `,
-    variables: { title: tokenSecret.course.title }
-  })).data.titleCourse._id
-}
 
 test('course', async () => {
   query = `
@@ -220,7 +237,7 @@ test('course', async () => {
       }
     }
   ` + fragments.course
-  variables = { id: await getCourseId() }
+  variables = { id: courseId }
   return run()
 })
 
@@ -243,9 +260,74 @@ test('editCourse', async () => {
       }
     }
   ` + fragments.result
-  variables = { id: await getCourseId(), input: { title: modifyName(tokenSecret.course.title) } }
+  variables = { id: courseId, input: { title: modifyName(tokenSecret.course.title) } }
   return run()
 })
+
+suite('Lesson')
+
+test('createLesson', async () => {
+  mutation = `
+    mutation($course: ID!, $input: createLessonInput!) {
+      createLesson(course: $course, input: $input) {
+        ...lesson
+      }
+    }
+  ` + fragments.lesson
+  variables = { course: courseId, input: { title: tokenSecret.lesson.title } }
+  return run()
+})
+
+test('titleLesson', async () => {
+  query = `
+    query($course: ID!, $title: String!) {
+      titleLesson(course: $course, title: $title) {
+        ...lesson
+      }
+    }
+  ` + fragments.lesson
+  variables = { title: tokenSecret.lesson.title, course: courseId }
+  const result = await run()
+  lessonId = result.data.titleLesson._id
+})
+
+test('lesson', async () => {
+  query = `
+    query($id: ID!, $course: ID!) {
+      lesson(id: $id, course: $course) {
+        ...lesson
+      }
+    }
+  ` + fragments.lesson
+  variables = { id: lessonId, course: courseId }
+  return run()
+})
+
+test('editLesson', async () => {
+  mutation = `
+    mutation($id: ID!, $course: ID!, $input: editLessonInput!) {
+      editLesson(id: $id, course: $course, input: $input) {
+        ...result
+      }
+    }
+  ` + fragments.result
+  variables = { id: lessonId, course: courseId, input: { title: modifyName(tokenSecret.lesson.title) } }
+  return run()
+})
+
+test('deleteLesson', async () => {
+  mutation = `
+    mutation($id: ID!, $course: ID!) {
+      deleteLesson(id: $id, course: $course) {
+        ...result
+      }
+    }
+  ` + fragments.result
+  variables = { id: lessonId, course: courseId }
+  return run()
+})
+
+suite('Cleanup')
 
 test('deleteCourse', async () => {
   mutation = `
@@ -255,11 +337,9 @@ test('deleteCourse', async () => {
       }
     }
   ` + fragments.result
-  variables = { id: await getCourseId() }
+  variables = { id: courseId }
   return run()
 })
-
-suite('Cleanup')
 
 test('deleteUser', async () => {
   mutation = `
