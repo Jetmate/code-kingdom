@@ -19,7 +19,7 @@ const rules = styleSheet({
 })
 
 @graphql(gql`
-mutation EditUser($input: editUserInput!) {
+mutation ($input: editUserInput!) {
   editUser(input: $input) {
     _id
   }

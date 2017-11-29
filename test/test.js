@@ -9,7 +9,7 @@ import gql from 'graphql-tag'
 
 /* eslint-env mocha */
 
-const TOKEN = 'ya29.GlwSBVZibUITeAuDvo8kDCQLMJVL0U_Hj8AC2VjCEuF0NNJUWSDnlHzPhBYPvUYilLI_YJE3DdCnPgPNm7L3xpLHVd34MFZ2gPOhBwS8vlbbyBu01bbtG23W1fVwAw'
+import tokenSecret from './testing_secret.json'
 
 const httpLink = createHttpLink({
   uri: 'http://0.0.0.0:3000/graphql',
@@ -20,7 +20,7 @@ const authLink = setContext((_, { headers }) => {
   return {
     headers: {
       ...headers,
-      authorization: `Bearer ${TOKEN}`,
+      authorization: `Bearer ${tokenSecret.token}`,
     }
   }
 })
@@ -30,6 +30,9 @@ export const client = new ApolloClient({
   cache: new InMemoryCache(),
 })
 
+function modifyName (name) {
+  return name.replace(/.$/, '$')
+}
 
 const fragments = {
   user: `
@@ -98,6 +101,12 @@ const fragments = {
         }
       }
     }
+  `,
+  result: `
+    fragment result on Result {
+      n
+      ok
+    }
   `
 }
 
@@ -105,17 +114,28 @@ let query, mutation, variables
 
 beforeEach(async () => {
   variables = {}
-})
-
-
-suite('Query')
-
-beforeEach(async () => {
   query = ''
+  mutation = ''
 })
 
-afterEach(async () => {
-  await client.query({ query: gql(query), variables })
+const run = async () => {
+  if (query) await client.query({ query: gql(query), variables })
+  else if (mutation) await client.mutate({ mutation: gql(mutation), variables })
+  else throw new Error('must specify query or mutation')
+}
+
+suite('User')
+
+test('createUser', async () => {
+  mutation = `
+    mutation($input: createUserInput!) {
+      createUser(input: $input) {
+        ...user
+      }
+    }
+  ` + fragments.user
+  variables = { input: { username: tokenSecret.user.username } }
+  return run()
 })
 
 test('user', async () => {
@@ -126,7 +146,8 @@ test('user', async () => {
       }
     }
   ` + fragments.user
-  variables = { id: '105342380724738854881' }
+  variables = { id: tokenSecret.id }
+  return run()
 })
 
 test('users', async () => {
@@ -137,28 +158,33 @@ test('users', async () => {
       }
     }
   ` + fragments.user
+  return run()
 })
 
+test('editUser', async () => {
+  mutation = `
+    mutation($input: editUserInput!) {
+      editUser(input: $input) {
+        ...result
+      }
+    }
+  ` + fragments.result
+  variables = { input: { username: modifyName(tokenSecret.user.username) } }
+  return run()
+})
 
-test('course', async () => {
-  query = `
-    query($id: ID!) {
-      course(id: $id) {
+suite('Course')
+
+test('createCourse', async () => {
+  mutation = `
+    mutation($input: createCourseInput!) {
+      createCourse(input: $input) {
         ...course
       }
     }
   ` + fragments.course
-  variables = { id: '5a1decd758ec4d6452eb2b72' }
-})
-
-test('courses', async () => {
-  query = `
-    query {
-      courses {
-        ...course
-      }
-    }
-  ` + fragments.course
+  variables = { input: { title: tokenSecret.course.title, language: tokenSecret.course.language } }
+  return run()
 })
 
 test('titleCourse', async () => {
@@ -169,38 +195,79 @@ test('titleCourse', async () => {
       }
     }
   ` + fragments.course
-  variables = { title: 'best course ndod' }
+  variables = { title: tokenSecret.course.title }
+  return run()
 })
 
-// test('user', async () => {
-//   await client.query({
-//     query: gql`
-//         query($id: ID!) {
-//           user(id: $id) {
-//             _id
-//           }
-//         }
-//       `,
-//     variables: { id: '105342380724738854881' }
-//   })
-// })
-// await client.mutate({
-//   mutation: gql`
-//       mutation CreateUser($input: createUserInput!) {
-//         createUser(input: $input) {
-//           _id
-//         }
-//       }
-//     `,
-//   variables: { input: { username: auth.email.split('@')[0] } }
-// })
+const getCourseId = async () => {
+  return (await client.query({
+    query: gql`
+      query($title: String!) {
+        titleCourse(title: $title) {
+          _id
+        }
+      }
+    `,
+    variables: { title: tokenSecret.course.title }
+  })).data.titleCourse._id
+}
 
-suite('Mutation')
-
-beforeEach(async () => {
-  mutation = ''
+test('course', async () => {
+  query = `
+    query($id: ID!) {
+      course(id: $id) {
+        ...course
+      }
+    }
+  ` + fragments.course
+  variables = { id: await getCourseId() }
+  return run()
 })
 
-afterEach(async () => {
-  await client.mutate({ mutation: gql(mutation), variables })
+test('courses', async () => {
+  query = `
+    query {
+      courses {
+        ...course
+      }
+    }
+  ` + fragments.course
+  return run()
+})
+
+test('editCourse', async () => {
+  mutation = `
+    mutation($id: ID!, $input: editCourseInput!) {
+      editCourse(id: $id, input: $input) {
+        ...result
+      }
+    }
+  ` + fragments.result
+  variables = { id: await getCourseId(), input: { title: modifyName(tokenSecret.course.title) } }
+  return run()
+})
+
+test('deleteCourse', async () => {
+  mutation = `
+    mutation($id: ID!) {
+      deleteCourse(id: $id) {
+        ...result
+      }
+    }
+  ` + fragments.result
+  variables = { id: await getCourseId() }
+  return run()
+})
+
+suite('Cleanup')
+
+test('deleteUser', async () => {
+  mutation = `
+    mutation {
+      deleteUser {
+        ...result
+      }
+    }
+  ` + fragments.result
+  return run()
 })

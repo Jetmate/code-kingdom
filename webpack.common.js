@@ -30,10 +30,6 @@ module.exports = {
         test: /\.jsx?$/,
         include: APP_DIR,
         loader: 'babel-loader',
-        options: {
-          presets: ['env', 'stage-0', 'react'],
-          plugins: ['transform-decorators-legacy']
-        }
       },
       {
         test: /\.(png|woff|woff2|eot|ttf|otf|svg)$/,
