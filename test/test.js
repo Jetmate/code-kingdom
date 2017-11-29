@@ -79,7 +79,7 @@ const fragments = {
         slides {
           _id
           title
-          ... on Quiz {
+          ... on QuizSlide {
             questions {
               title
               answers {
@@ -88,13 +88,13 @@ const fragments = {
               }
             }
           }
-          ... on Instruction {
+          ... on InstructionSlide {
             description
             hint
             code
             correctOutput
           }
-          ... on Project {
+          ... on ProjectSlide {
             description
             code
           }
@@ -115,7 +115,7 @@ const fragments = {
       slides {
         _id
         title
-        ... on Quiz {
+        ... on QuizSlide {
           questions {
             title
             answers {
@@ -124,22 +124,48 @@ const fragments = {
             }
           }
         }
-        ... on Instruction {
+        ... on InstructionSlide {
           description
           hint
           code
           correctOutput
         }
-        ... on Project {
+        ... on ProjectSlide {
           description
           code
         }
       }
     }
   `,
+  slide: `
+    fragment slide on Slide {
+      _id
+      title
+      ... on QuizSlide {
+        questions {
+          title
+          answers {
+            title
+            correct
+          }
+        }
+      }
+      ... on InstructionSlide {
+        description
+        hint
+        code
+        correctOutput
+      }
+      ... on ProjectSlide {
+        description
+        code
+      }
+    }
+  `
 }
 
 let query, mutation, variables, courseId, lessonId
+let slideIds = []
 
 beforeEach(async () => {
   variables = {}
@@ -315,6 +341,131 @@ test('editLesson', async () => {
   return run()
 })
 
+suite('Slide')
+
+test('createQuizSlide', async () => {
+  mutation = `
+    mutation($lesson: ID!, $course: ID!, $input: createQuizSlideInput!) {
+      createQuizSlide(lesson: $lesson, course: $course, input: $input) {
+        ...slide
+      }
+    }
+  ` + fragments.slide
+  variables = {
+    lesson: lessonId,
+    course: courseId,
+    input: {
+      title: tokenSecret.slide.title,
+      questions: tokenSecret.slide.questions,
+    }
+  }
+  const result = await run()
+  slideIds.push(result.data.createQuizSlide._id)
+})
+
+test('createInstructionSlide', async () => {
+  mutation = `
+    mutation($lesson: ID!, $course: ID!, $input: createInstructionSlideInput!) {
+      createInstructionSlide(lesson: $lesson, course: $course, input: $input) {
+        ...slide
+      }
+    }
+  ` + fragments.slide
+  variables = {
+    lesson: lessonId,
+    course: courseId,
+    input: {
+      title: tokenSecret.slide.title,
+      description: tokenSecret.slide.description,
+      hint: tokenSecret.slide.hint,
+      code: tokenSecret.slide.code,
+      correctOutput: tokenSecret.slide.correctOutput,
+    }
+  }
+  const result = await run()
+  slideIds.push(result.data.createInstructionSlide._id)
+})
+
+test('createProjectSlide', async () => {
+  mutation = `
+    mutation($lesson: ID!, $course: ID!, $input: createProjectSlideInput!) {
+      createProjectSlide(lesson: $lesson, course: $course, input: $input) {
+        ...slide
+      }
+    }
+  ` + fragments.slide
+  variables = {
+    lesson: lessonId,
+    course: courseId,
+    input: {
+      title: tokenSecret.slide.title,
+      description: tokenSecret.slide.description,
+      code: tokenSecret.slide.code,
+    }
+  }
+  const result = await run()
+  slideIds.push(result.data.createProjectSlide._id)
+})
+
+// const test1 = async (slideId) => {
+//   test('slide' + slideId, async () => {
+//     query = `
+//       query($id: ID!, $lesson: ID!, $course: ID!) {
+//         slide(id: $id, lesson: $lesson, course: $course) {
+//           ...slide
+//         }
+//       }
+//     ` + fragments.slide
+//     variables = { id: slideId, lesson: lessonId, course: courseId }
+//     await run()
+//   })
+
+// }
+
+// for (let slideId of slideIds) {
+//   test1(slideId)
+// }
+
+//   const name = slideId === 0 ? 'QuizSlide' : (slideId === 1 ? 'InstructionSlide' : 'ProjectSlide')
+
+//   test('edit' + name, async () => {
+//     mutation = `
+//       mutation($id: ID!, $lesson: ID!, $course: ID!, $input: edit${name}!) {
+//         edit${name}(id: $id, lesson: $lesson, course: $course, input: $input) {
+//           ...result
+//         }
+//       }
+//     ` + fragments.result
+//     variables = {
+//       id: slideId,
+//       lesson: lessonId,
+//       course: courseId,
+//       input: { title: modifyName(tokenSecret.slide.title) }
+//     }
+//     return run()
+//   })
+
+//   test('deleteSlide', async () => {
+//     mutation = `
+//       mutation($id: ID!, $lesson: ID!, $course: ID!) {
+//         deleteSlide(id: $id, lesson: $lesson, course: $course) {
+//           ...result
+//         }
+//       }
+//     ` + fragments.result
+//     variables = {
+//       id: slideId,
+//       lesson: lessonId,
+//       course: courseId,
+//     }
+//     return run()
+//   })
+// }
+
+// })
+
+suite('Cleanup')
+
 test('deleteLesson', async () => {
   mutation = `
     mutation($id: ID!, $course: ID!) {
@@ -326,8 +477,6 @@ test('deleteLesson', async () => {
   variables = { id: lessonId, course: courseId }
   return run()
 })
-
-suite('Cleanup')
 
 test('deleteCourse', async () => {
   mutation = `
