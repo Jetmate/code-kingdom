@@ -41,6 +41,7 @@ globals({
   'html, body, #root, [data-reactroot]': {
     height: '100%',
     fontFamily: 'inconsolata',
+    overflow: 'hidden',
   },
   'h1, h2, h3': {
     textAlign: 'center',

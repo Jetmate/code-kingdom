@@ -1,10 +1,21 @@
-var path = require('path')
+const path = require('path')
 
-var APP_DIR = path.resolve('src')
-var BUILD_DIR = path.resolve('www')
+const APP_DIR = path.resolve('src')
+const BUILD_DIR = path.resolve('www')
+
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
   entry: ['babel-polyfill', path.resolve(APP_DIR, 'index.js')],
+
+  plugins: [
+    new CopyWebpackPlugin([
+      {
+        from: 'node_modules/monaco-editor/min/vs',
+        to: 'vs',
+      }
+    ])
+  ],
 
   output: {
     path: BUILD_DIR,

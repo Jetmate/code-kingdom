@@ -12,7 +12,7 @@ import gql from 'graphql-tag'
 import tokenSecret from './testing_secret.json'
 
 const httpLink = createHttpLink({
-  uri: 'http://0.0.0.0:3000/graphql',
+  uri: 'http://127.0.0.1:3000/graphql',
   fetch: fetch,
 })
 
@@ -30,7 +30,7 @@ export const client = new ApolloClient({
   cache: new InMemoryCache(),
 })
 
-function modifyName (name) {
+function modifyName(name) {
   return name.replace(/.$/, '$')
 }
 
@@ -164,8 +164,7 @@ const fragments = {
   `
 }
 
-let query, mutation, variables, courseId, lessonId
-let slideIds = []
+let query, mutation, variables, courseId, lessonId, slideId
 
 beforeEach(async () => {
   variables = {}
@@ -343,6 +342,51 @@ test('editLesson', async () => {
 
 suite('Slide')
 
+const querySlide = async () => {
+  query = `
+      query($id: ID!, $lesson: ID!, $course: ID!) {
+        slide(id: $id, lesson: $lesson, course: $course) {
+          ...slide
+        }
+      }
+    ` + fragments.slide
+  variables = { id: slideId, lesson: lessonId, course: courseId }
+  await run()
+}
+
+const deleteSlide = async () => {
+  mutation = `
+      mutation($id: ID!, $lesson: ID!, $course: ID!) {
+        deleteSlide(id: $id, lesson: $lesson, course: $course) {
+          ...result
+        }
+      }
+    ` + fragments.result
+  variables = { id: slideId, lesson: lessonId, course: courseId }
+  await run()
+}
+
+const editSlide = (name) => {
+  return async () => {
+    mutation = `
+      mutation($id: ID!, $lesson: ID!, $course: ID!, $input: ${name}Input!) {
+        ${name}(id: $id, lesson: $lesson, course: $course, input: $input) {
+          ...result
+        }
+      }
+    ` + fragments.result
+    variables = {
+      id: slideId,
+      lesson: lessonId,
+      course: courseId,
+      input: {
+        title: modifyName(tokenSecret.slide.title),
+      }
+    }
+    await run()
+  }
+}
+
 test('createQuizSlide', async () => {
   mutation = `
     mutation($lesson: ID!, $course: ID!, $input: createQuizSlideInput!) {
@@ -360,8 +404,12 @@ test('createQuizSlide', async () => {
     }
   }
   const result = await run()
-  slideIds.push(result.data.createQuizSlide._id)
+  slideId = result.data.createQuizSlide._id
 })
+
+test('quizSlide', querySlide)
+test('editQuizSlide', editSlide('editQuizSlide'))
+test('deleteQuizSlide', deleteSlide)
 
 test('createInstructionSlide', async () => {
   mutation = `
@@ -383,8 +431,12 @@ test('createInstructionSlide', async () => {
     }
   }
   const result = await run()
-  slideIds.push(result.data.createInstructionSlide._id)
+  slideId = result.data.createInstructionSlide._id
 })
+
+test('editInstructionSlide', editSlide('editInstructionSlide'))
+test('instructionSlide', querySlide)
+test('deleteInstructionSlide', deleteSlide)
 
 test('createProjectSlide', async () => {
   mutation = `
@@ -404,65 +456,12 @@ test('createProjectSlide', async () => {
     }
   }
   const result = await run()
-  slideIds.push(result.data.createProjectSlide._id)
+  slideId = result.data.createProjectSlide._id
 })
 
-// const test1 = async (slideId) => {
-//   test('slide' + slideId, async () => {
-//     query = `
-//       query($id: ID!, $lesson: ID!, $course: ID!) {
-//         slide(id: $id, lesson: $lesson, course: $course) {
-//           ...slide
-//         }
-//       }
-//     ` + fragments.slide
-//     variables = { id: slideId, lesson: lessonId, course: courseId }
-//     await run()
-//   })
-
-// }
-
-// for (let slideId of slideIds) {
-//   test1(slideId)
-// }
-
-//   const name = slideId === 0 ? 'QuizSlide' : (slideId === 1 ? 'InstructionSlide' : 'ProjectSlide')
-
-//   test('edit' + name, async () => {
-//     mutation = `
-//       mutation($id: ID!, $lesson: ID!, $course: ID!, $input: edit${name}!) {
-//         edit${name}(id: $id, lesson: $lesson, course: $course, input: $input) {
-//           ...result
-//         }
-//       }
-//     ` + fragments.result
-//     variables = {
-//       id: slideId,
-//       lesson: lessonId,
-//       course: courseId,
-//       input: { title: modifyName(tokenSecret.slide.title) }
-//     }
-//     return run()
-//   })
-
-//   test('deleteSlide', async () => {
-//     mutation = `
-//       mutation($id: ID!, $lesson: ID!, $course: ID!) {
-//         deleteSlide(id: $id, lesson: $lesson, course: $course) {
-//           ...result
-//         }
-//       }
-//     ` + fragments.result
-//     variables = {
-//       id: slideId,
-//       lesson: lessonId,
-//       course: courseId,
-//     }
-//     return run()
-//   })
-// }
-
-// })
+test('editProjectSlide', editSlide('editProjectSlide'))
+test('projectSlide', querySlide)
+test('deleteProjectSlide', deleteSlide)
 
 suite('Cleanup')
 

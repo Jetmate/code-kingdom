@@ -33,6 +33,7 @@ export default function Routes (props) {
       <ProtectedRoute path='/home' component={pages.Home} />
       <Route path='/courses/:course' component={pages.Course} />
       <Route path='/courses' component={pages.Courses} />
+      <Route path='/lesson' component={pages.Lesson} />
     </Switch>
   )
 }
